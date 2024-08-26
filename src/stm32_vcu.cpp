@@ -93,6 +93,7 @@ static Chargerint* selectedChargeInt = &UnUsed;
 static Shifter* selectedShifter = &NoGearLever;
 static BMS BMSnone;
 static SimpBMS BMSsimp;
+static LeafBMS BMSleaf;
 static DaisychainBMS BMSdaisychain;
 static DCDC DCDCnone;
 static TeslaDCDC DCDCTesla;
@@ -690,7 +691,6 @@ static void UpdateChargeInt()
         selectedChargeInt = &CPCcan;
         break;
     case ChargeInterfaces::Focci:
-
         selectedChargeInt = &Foccican;
         break;
     }
@@ -726,6 +726,9 @@ static void UpdateBMS()
     {
     case BMSModes::BMSModeSimpBMS:
         selectedBMS = &BMSsimp;
+        break;
+    case BMSModes::BMSModeLeafBMS:
+        selectedBMS = &BMSleaf;
         break;
     case BMSModes::BMSModeDaisychainSingleBMS:
     case BMSModes::BMSModeDaisychainDualBMS:
@@ -786,7 +789,7 @@ static void UpdateShifter()
         selectedShifter = &JLRG2shift;
         break;
 
-            case ShifterModes::BMWE65:
+    case ShifterModes::BMWE65:
         selectedShifter = &E65GearLever;
         break;
 
