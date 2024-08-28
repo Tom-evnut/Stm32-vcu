@@ -259,8 +259,7 @@ void SelectDirection(Vehicle* vehicle, Shifter* shifter)
 
 float ProcessUdc(int motorSpeed)
 {
-
-    if (Param::GetInt(Param::Type) == 0)
+    if (Param::GetInt(Param::ShuntType) == 1)
     {
         float udc = ((float)ISA::Voltage)/1000;//get voltage from isa sensor and post to parameter database
         Param::SetFloat(Param::udc, udc);
@@ -280,9 +279,7 @@ float ProcessUdc(int motorSpeed)
         float deltaVolts2 = (udc2 + udc3) - udc;
         Param::SetFloat(Param::deltaV, MAX(deltaVolts1, deltaVolts2));
     }
-
-    else if (Param::GetInt(Param::Type) == 1)
-
+    else if (Param::GetInt(Param::ShuntType) == 2)
     {
         float udc = ((float)SBOX::Voltage2)/1000;//get output voltage from sbox sensor and post to parameter database
         Param::SetFloat(Param::udc, udc);
@@ -295,9 +292,7 @@ float ProcessUdc(int motorSpeed)
         float kw = (udc*idc)/1000;//get power from isa sensor and post to parameter database
         Param::SetFloat(Param::power, kw);
     }
-
-    else if (Param::GetInt(Param::Type) == 2)
-
+    else if (Param::GetInt(Param::ShuntType) == 3)
     {
         float udc = ((float)VWBOX::Voltage)*0.5;//get output voltage from sbox sensor and post to parameter database
         Param::SetFloat(Param::udc, udc);
@@ -308,17 +303,16 @@ float ProcessUdc(int motorSpeed)
         float idc = ((float)VWBOX::Amperes)*0.1;//get current from sbox sensor and post to parameter database
         Param::SetFloat(Param::idc, idc);
     }
+
+    //This way we can have ShuntType 0 and still pull latests info
     float udclim = Param::GetFloat(Param::udclim);
     float udc = Param::GetFloat(Param::udc);
-    // Currently unused parameters:
-    // s32fp udcmin = Param::Get(Param::udcmin);
-    // s32fp udcmax = Param::Get(Param::udcmax);
 
 
     //Calculate "12V" supply voltage from voltage divider on mprot pin
     //1.2/(4.7+1.2)/3.33*4095 = 250 -> make it a bit less for pin losses etc
     //HW_REV1 had 3.9k resistors
-    int uauxGain = 210;
+    int uauxGain = 210; //!! hard coded AUX gain
     Param::SetFloat(Param::uaux, ((float)AnaIn::uaux.Get()) / uauxGain);
 
     if (udc > udclim)

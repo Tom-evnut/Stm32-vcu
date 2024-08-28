@@ -275,7 +275,11 @@ static void Ms100Task(void)
     Param::SetInt(Param::lasterr, ErrorMessage::GetLastError());
     int opmode = Param::GetInt(Param::opmode);
     utils::SelectDirection(selectedVehicle, selectedShifter);
-    utils::CalcSOC();
+
+    if(Param::GetInt(Param::ShuntType) != 0)//Do not do any SOC calcs
+    {
+        utils::CalcSOC();
+    }
 
     Param::SetInt(Param::cruisestt, selectedVehicle->GetCruiseState());
     Param::SetFloat(Param::FrontRearBal, selectedVehicle->GetFrontRearBalance());
@@ -488,6 +492,10 @@ static void Ms10Task(void)
         {
             if(selectedInverter != &openInv)DigIo::inv_out.Set();//inverter power on but not if we are in charge mode and not if OI
         }
+        else if((Param::GetInt(Param::ShuntType) == 0) && selectedInverter == &leafInv)//Shunt 0 + Leaf is precharge using leaf inverter voltage
+        {
+            DigIo::inv_out.Set(); //inverter power on
+        }
         IOMatrix::GetPin(IOMatrix::NEGCONTACTOR)->Set();
         IOMatrix::GetPin(IOMatrix::COOLANTPUMP)->Set();
         if(rlyDly!=0) rlyDly--;//here we are going to pause before energising precharge to prevent too many contactors pulling amps at the same time
@@ -551,8 +559,8 @@ static void Ms10Task(void)
     }
 
     ControlCabHeater(opmode);
-    if (Param::GetInt(Param::Type) == 1)  SBOX::ControlContactors(opmode,canInterface[Param::GetInt(Param::ShuntCan)]);//BMW contactor box
-    if (Param::GetInt(Param::Type) == 2)  VWBOX::ControlContactors(opmode,canInterface[Param::GetInt(Param::ShuntCan)]);//VW contactor box
+    if (Param::GetInt(Param::ShuntType) == 2)  SBOX::ControlContactors(opmode,canInterface[Param::GetInt(Param::ShuntCan)]);//BMW contactor box
+    if (Param::GetInt(Param::ShuntType) == 3)  VWBOX::ControlContactors(opmode,canInterface[Param::GetInt(Param::ShuntCan)]);//VW contactor box
 
 
 }
@@ -826,9 +834,9 @@ static void SetCanFilters()
     selectedShifter->SetCanInterface(vehicle_can);
     canOBD2.SetCanInterface(obd2_can);
 
-    if (Param::GetInt(Param::Type) == 0)  ISA::RegisterCanMessages(shunt_can);//select isa shunt
-    if (Param::GetInt(Param::Type) == 1)  SBOX::RegisterCanMessages(shunt_can);//select bmw sbox
-    if (Param::GetInt(Param::Type) == 2)  VWBOX::RegisterCanMessages(shunt_can);//select vw sbox
+    if (Param::GetInt(Param::ShuntType) == 1)  ISA::RegisterCanMessages(shunt_can);//select isa shunt
+    if (Param::GetInt(Param::ShuntType) == 2)  SBOX::RegisterCanMessages(shunt_can);//select bmw sbox
+    if (Param::GetInt(Param::ShuntType) == 3)  VWBOX::RegisterCanMessages(shunt_can);//select vw sbox
 
     canInterface[1]->RegisterUserMessage(0x601); //CanSDO
     canInterface[0]->RegisterUserMessage(0x601); //CanSDO
@@ -962,9 +970,9 @@ static bool CanCallback(uint32_t id, uint32_t data[2], uint8_t dlc) //This is wh
         break;
 
     default:
-        if (Param::GetInt(Param::Type) == 0)  ISA::DecodeCAN(id, data);
-        if (Param::GetInt(Param::Type) == 1)  SBOX::DecodeCAN(id, data);
-        if (Param::GetInt(Param::Type) == 2)  VWBOX::DecodeCAN(id, data);
+        if (Param::GetInt(Param::ShuntType) == 1)  ISA::DecodeCAN(id, data);
+        if (Param::GetInt(Param::ShuntType) == 2)  SBOX::DecodeCAN(id, data);
+        if (Param::GetInt(Param::ShuntType) == 3)  VWBOX::DecodeCAN(id, data);
         selectedInverter->DecodeCAN(id, data);
         selectedVehicle->DecodeCAN(id, data);
         selectedCharger->DecodeCAN(id, data);
